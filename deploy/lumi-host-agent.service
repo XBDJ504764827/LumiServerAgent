@@ -1,0 +1,15 @@
+[Unit]
+Description=Lumi Server Agent (TODO: 占位单元文件，后续补全)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# TODO(feat): 补全 User/WorkingDirectory/ExecStart（ExecStart 指向 release 二进制 + 配置文件）。
+# 配置文件 /etc/lumi-agent.env 权限应为 600，含 LUMI_BACKEND_URL / LUMI_AGENT_TOKEN。
+ExecStart=/usr/local/bin/lumi-server-agent
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

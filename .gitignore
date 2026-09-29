@@ -1,0 +1,6 @@
+/target/
+.env
+/etc/lumi-agent.env
+*.log
+.idea/
+.vscode/
