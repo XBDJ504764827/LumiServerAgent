@@ -11,7 +11,7 @@
 
 ## 后续实现清单（占位）
 
-- [ ] `feat:` 配置加载（`/etc/lumi-agent.env` + 环境变量 + 实例清单校验）
+- [x] `feat:` 配置加载（`/etc/lumi-agent.env` + 环境变量 + 实例清单校验）
 - [ ] `feat:` heartbeat 上报存活 + 实例清单
 - [ ] `feat:` poll 拉取电源任务
 - [ ] `feat:` LGSM allowlist 执行（argv、不走 shell、超时杀掉、输出截断）
