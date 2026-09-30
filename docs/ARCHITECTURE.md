@@ -31,4 +31,4 @@ Agent 一律 `Authorization: Bearer <agent_token>`，JSON 通信，控制面请�
 - [x] `feat:` result 回写执行结果
 - [x] `test:` allowlist 合法/非法用例
 - [x] `feat:` 主循环 + SIGTERM 优雅退出 + systemd 单元
-- [ ] `chore:` 一键安装脚本 + CI 流水线
+- [x] `chore:` 一键安装脚本 + CI 流水线

@@ -26,6 +26,22 @@ LumiServerAgent/
 └── .github/workflows/ci.yml
 ```
 
+## 快速开始（宿主机）
+
+```bash
+# 1. 一键安装（包来自网站 Agent控制 页，不走 GitHub）
+sudo bash install.sh \
+  --url https://admin.example.com \
+  --token <网站签发的Agent口令> \
+  --lgsm-dir /home/steam/lgsm \
+  --instances csgoserver,csgo2server
+
+# 2. 看日志 / 确认在线
+journalctl -u lumi-host-agent -f
+```
+
+本地构建：`cargo build --release`，二进制在 `target/release/lumi-server-agent`。
+
 ## 提交规范
 
 使用 Conventional Commits，便于版本记录与自动化：

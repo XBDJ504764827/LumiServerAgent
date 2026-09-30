@@ -10,5 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # TODO(chore): 补全 cargo fmt --check / clippy -D warnings / test 流水线。
-      - run: echo "TODO: CI 尚未实现，仅占位。"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
