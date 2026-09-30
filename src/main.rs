@@ -1,5 +1,9 @@
+use std::time::Duration;
+
 use anyhow::Result;
 use clap::Parser;
+use lumi_server_agent::agent::Agent;
+use lumi_server_agent::backend::{local_hostname, BackendClient};
 use lumi_server_agent::config::{Config, Overrides};
 
 #[derive(Debug, Parser)]
@@ -28,6 +32,10 @@ struct Args {
     /// 配置文件路径，默认 /etc/lumi-agent.env
     #[arg(long, env = "LUMI_CONFIG")]
     config: Option<String>,
+
+    /// 轮询间隔（秒），默认 10
+    #[arg(long, env = "LUMI_POLL_INTERVAL_SECS", default_value_t = 10)]
+    poll_interval_secs: u64,
 }
 
 #[tokio::main]
@@ -42,14 +50,19 @@ async fn main() -> Result<()> {
         instances: args.instances,
     })?;
 
+    let client = BackendClient::new(&cfg.backend_url, &cfg.agent_token)?;
+    let agent = Agent::new(client, cfg.lgsm_dir.clone(), cfg.instances.clone());
     tracing::info!(
         backend = %cfg.backend_url,
         lgsm_dir = %cfg.lgsm_dir,
         instances = ?cfg.instances,
-        "agent 启动（占位）：后续实现 heartbeat -> poll -> exec -> result 主循环"
+        interval_secs = args.poll_interval_secs.max(1),
+        "agent 启动"
     );
-
-    // TODO(feat, 阶段4): 实现 heartbeat -> poll -> exec -> result 主循环。
-    // TODO(feat, 阶段4): 实现 SIGTERM 优雅退出。
-    Ok(())
+    agent
+        .run_forever(
+            &local_hostname(),
+            Duration::from_secs(args.poll_interval_secs.max(1)),
+        )
+        .await
 }

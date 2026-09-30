@@ -30,5 +30,5 @@ Agent 一律 `Authorization: Bearer <agent_token>`，JSON 通信，控制面请�
 - [x] `feat:` LGSM allowlist 执行（argv、不走 shell、超时杀掉、输出截断）
 - [x] `feat:` result 回写执行结果
 - [x] `test:` allowlist 合法/非法用例
-- [ ] `feat:` 主循环 + SIGTERM 优雅退出 + systemd 单元
+- [x] `feat:` 主循环 + SIGTERM 优雅退出 + systemd 单元
 - [ ] `chore:` 一键安装脚本 + CI 流水线
