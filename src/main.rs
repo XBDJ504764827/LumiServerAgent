@@ -1,10 +1,6 @@
-mod backend;
-mod config;
-mod lgsm;
-
 use anyhow::Result;
 use clap::Parser;
-use config::{Config, Overrides};
+use lumi_server_agent::config::{Config, Overrides};
 
 #[derive(Debug, Parser)]
 #[command(
