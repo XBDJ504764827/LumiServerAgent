@@ -6,9 +6,32 @@ on:
   pull_request:
 
 jobs:
+  # ===== 代码检查：格式 + clippy + 测试（均含编译） =====
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # TODO(chore): 补全 cargo fmt --check / clippy -D warnings / test 流水线。
-      - run: echo "TODO: CI 尚未实现，仅占位。"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
+
+  # ===== 编译验证：debug + release 产物必须能编过 =====
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build
+      - run: cargo build --release
+
+  # ===== 部署文件检查：安装脚本语法 =====
+  scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash -n scripts/install.sh
