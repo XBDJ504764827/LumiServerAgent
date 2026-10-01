@@ -26,6 +26,8 @@ pub struct Overrides {
     pub lgsm_dir: Option<String>,
     /// 逗号分隔的实例清单，如 `csgoserver,csgo2server`。
     pub instances: Option<String>,
+    /// 轮询间隔秒数。
+    pub poll_interval_secs: Option<u64>,
 }
 
 /// 生效后的 Agent 运行配置（已校验）。
@@ -35,6 +37,7 @@ pub struct Config {
     pub agent_token: String,
     pub lgsm_dir: String,
     pub instances: Vec<String>,
+    pub poll_interval_secs: u64,
 }
 
 fn instance_regex() -> &'static Regex {
@@ -202,6 +205,22 @@ impl Config {
             "",
         );
 
+        let poll_interval_secs = overrides
+            .poll_interval_secs
+            .filter(|v| *v >= 1)
+            .or_else(|| {
+                std::env::var("LUMI_POLL_INTERVAL_SECS")
+                    .ok()
+                    .and_then(|v| v.trim().parse().ok())
+                    .filter(|v: &u64| *v >= 1)
+            })
+            .or_else(|| {
+                file_get(&file, "POLL_INTERVAL_SECS")
+                    .and_then(|v| v.trim().parse().ok())
+                    .filter(|v: &u64| *v >= 1)
+            })
+            .unwrap_or(10);
+
         if agent_token.trim().is_empty() {
             bail!(
                 "LUMI_AGENT_TOKEN 未设置：通过 --token、环境变量或 {config_path} 提供（由网站 Agent控制 页签发）"
@@ -213,6 +232,7 @@ impl Config {
             agent_token,
             lgsm_dir,
             instances: parse_instances(&instances_raw)?,
+            poll_interval_secs,
         })
     }
 }
@@ -224,12 +244,13 @@ mod tests {
 
     /// 环境变量是进程全局的：凡是读写 `LUMI_*` 的测试都串行化，避免并行互相踩。
     static ENV_LOCK: Mutex<()> = Mutex::new(());
-    const ENV_KEYS: [&str; 5] = [
+    const ENV_KEYS: [&str; 6] = [
         "LUMI_BACKEND_URL",
         "LUMI_AGENT_TOKEN",
         "LUMI_LGSM_DIR",
         "LUMI_INSTANCES",
         "LUMI_CONFIG",
+        "LUMI_POLL_INTERVAL_SECS",
     ];
 
     /// 拿锁 + 清空 `LUMI_*`，drop 时恢复现场。
@@ -369,6 +390,39 @@ mod tests {
         assert_eq!(cfg.agent_token, "file-token");
         assert_eq!(cfg.lgsm_dir, "/srv/lgsm");
         assert_eq!(cfg.instances, vec!["csgo2server".to_string()]);
+    }
+
+    #[test]
+    fn poll_interval_cli_env_file_priority() {
+        let _guard = EnvGuard::take();
+        // 文件层生效
+        let cfg = load_with_file(
+            "AGENT_TOKEN=t\nLUMI_POLL_INTERVAL_SECS=7\n",
+            Overrides::default(),
+        )
+        .expect("加载应成功");
+        assert_eq!(cfg.poll_interval_secs, 7);
+        // 环境变量胜过文件
+        std::env::set_var("LUMI_POLL_INTERVAL_SECS", "9");
+        let cfg = load_with_file(
+            "AGENT_TOKEN=t\nLUMI_POLL_INTERVAL_SECS=7\n",
+            Overrides::default(),
+        )
+        .expect("加载应成功");
+        assert_eq!(cfg.poll_interval_secs, 9);
+        // CLI 胜过环境变量；非法值回落默认 10
+        let cfg = load_with_file(
+            "AGENT_TOKEN=t\n",
+            Overrides {
+                poll_interval_secs: Some(5),
+                ..Default::default()
+            },
+        )
+        .expect("加载应成功");
+        assert_eq!(cfg.poll_interval_secs, 5);
+        std::env::set_var("LUMI_POLL_INTERVAL_SECS", "oops");
+        let cfg = load_with_file("AGENT_TOKEN=t\n", Overrides::default()).expect("加载应成功");
+        assert_eq!(cfg.poll_interval_secs, 10);
     }
 
     #[test]
