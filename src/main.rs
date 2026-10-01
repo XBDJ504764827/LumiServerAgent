@@ -33,9 +33,9 @@ struct Args {
     #[arg(long, env = "LUMI_CONFIG")]
     config: Option<String>,
 
-    /// 轮询间隔（秒），默认 10
-    #[arg(long, env = "LUMI_POLL_INTERVAL_SECS", default_value_t = 10)]
-    poll_interval_secs: u64,
+    /// 轮询间隔（秒）；CLI/环境变量/配置文件均可给，不给默认 10
+    #[arg(long, env = "LUMI_POLL_INTERVAL_SECS")]
+    poll_interval_secs: Option<u64>,
 }
 
 #[tokio::main]
@@ -48,6 +48,7 @@ async fn main() -> Result<()> {
         agent_token: args.token,
         lgsm_dir: args.lgsm_dir,
         instances: args.instances,
+        poll_interval_secs: args.poll_interval_secs,
     })?;
 
     let client = BackendClient::new(&cfg.backend_url, &cfg.agent_token)?;
@@ -56,13 +57,13 @@ async fn main() -> Result<()> {
         backend = %cfg.backend_url,
         lgsm_dir = %cfg.lgsm_dir,
         instances = ?cfg.instances,
-        interval_secs = args.poll_interval_secs.max(1),
+        interval_secs = cfg.poll_interval_secs,
         "agent 启动"
     );
     agent
         .run_forever(
             &local_hostname(),
-            Duration::from_secs(args.poll_interval_secs.max(1)),
+            Duration::from_secs(cfg.poll_interval_secs),
         )
         .await
 }
